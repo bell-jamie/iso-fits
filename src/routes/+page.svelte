@@ -1,10 +1,22 @@
 <script lang="ts">
-  import {lookupIso286 } from '$lib/iso286';
+  import { lookupIso286 } from '$lib/iso286';
+  import { holeDeviations, shaftDeviations, grades } from 'iso-286';
+  // import { onMount } from 'svelte';
+
+  // onMount(() => {
+  //   console.log(grades());
+  // });
 
   let nominal = $state('');
-  let holeClass = $state('');
-  let shaftClass = $state('');
   let nom = $derived(parseFloat(nominal));
+
+  let holeLetter = $state('');
+  let holeGrade = $state('');
+  let holeClass = $derived(holeLetter && holeGrade ? `${holeLetter}${holeGrade}` : ''); // makes H 7 -> H7
+
+  let shaftLetter = $state('');
+  let shaftGrade = $state('');
+  let shaftClass = $derived(shaftLetter && shaftGrade ? `${shaftLetter}${shaftGrade}` : '');
 
   let fit = $derived.by(() => { // derived.by() for function instead of expression
     if (!nom || !holeClass || !shaftClass) return null;
@@ -27,7 +39,7 @@
     const shaftMin = nom + fit.shaft!.lower;
     const maxClearance = holeMax - shaftMin;
     const minClearance = holeMin - shaftMax;
-    const type = minClearance > 0 ? 'Clearance': maxClearance < 0 ? 'Interference' : 'Transition';
+    const type = minClearance >= 0 ? 'Clearance': maxClearance < 0 ? 'Interference' : 'Transition';
     return { holeMax, holeMin, shaftMax, shaftMin, minClearance, maxClearance, type };
   })
 
@@ -44,13 +56,37 @@
     </label>
 
     <label>
-        Hole tolerance class
-        <input type="text" placeholder="e.g. H7" bind:value={holeClass} />
+        Hole
+        <select bind:value={holeLetter}>
+            <option value="">-</option>
+            {#each holeDeviations() as letter (letter)}
+                <option value={letter}>{letter}</option>
+            {/each}
+        </select>
+
+        <select bind:value={holeGrade}>
+            <option value="">-</option>
+            {#each grades() as grade (grade)}
+                <option value={grade}>{grade}</option>
+            {/each}
+        </select>
     </label>
 
     <label>
-        Shaft tolerance class
-        <input type="text" placeholder="e.g. h6" bind:value={shaftClass} />
+        Shaft
+        <select bind:value={shaftLetter}>
+            <option value="">-</option>
+            {#each shaftDeviations() as letter (letter)}
+                <option value={letter}>{letter}</option>
+            {/each}
+        </select>
+
+        <select bind:value={shaftGrade}>
+            <option value="">-</option>
+            {#each grades() as grade (grade)}
+                <option value={grade}>{grade}</option>
+            {/each}
+        </select>
     </label>
 </div>
 
