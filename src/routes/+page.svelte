@@ -2,7 +2,16 @@
 	import { lookupIso286 } from '$lib/iso286';
 	import { holeDeviations, shaftDeviations, grades } from 'iso-286';
 	// import { onMount } from 'svelte';
+	import { untrack } from 'svelte';
 	import { PersistedState } from 'runed';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Card from '$lib/components/ui/card';
+	import ISOCombobox from '$lib/components/ISOCombobox.svelte';
+	import ISOGridSelect from '$lib/components/ISOGridSelect.svelte';
+	import ISOSizeInput from '$lib/components/ISOSizeInput.svelte';
+	import LinkIcon from '@lucide/svelte/icons/link';
+	import UnlinkIcon from '@lucide/svelte/icons/unlink';
 
 	const holeSize = new PersistedState('holeSize', '');
 	const holeLetter = new PersistedState('holeLetter', '');
@@ -11,6 +20,20 @@
 	const shaftSize = new PersistedState('shaftSize', '');
 	const shaftLetter = new PersistedState('shaftLetter', '');
 	const shaftGrade = new PersistedState('shaftGrade', '');
+
+	const sizeSynced = new PersistedState('sizeSynced', false);
+
+	$effect(() => {
+		const size = holeSize.current;
+		if (!sizeSynced.current) return;
+		if (untrack(() => shaftSize.current) !== size) shaftSize.current = size;
+	});
+
+	$effect(() => {
+		const size = shaftSize.current;
+		if (!sizeSynced.current) return;
+		if (untrack(() => holeSize.current) !== size) holeSize.current = size;
+	});
 
 	let holeNom = $derived(parseFloat(holeSize.current));
 	let shaftNom = $derived(parseFloat(shaftSize.current));
@@ -85,107 +108,159 @@
 			type
 		};
 	});
+
+	let fitBadgeVariant: 'default' | 'secondary' | 'destructive' = $derived(
+		fit?.type === 'Interference'
+			? 'destructive'
+			: fit?.type === 'Transition'
+				? 'secondary'
+				: 'default'
+	);
 </script>
 
 <div class="flex flex-col gap-6">
 	<div class="flex gap-6">
-		<div
-			class="flex-1 rounded-(--jb-radius-lg) border border-(--jb-border-color) bg-(--jb-bg-card) p-6"
-		>
-			<label for="hole" class="text-2xl font-bold"> Hole </label>
-			<hr />
+		<Card.Root class="flex-1">
+			<Card.Header>
+				<Card.Title class="text-2xl font-bold">Hole</Card.Title>
+			</Card.Header>
+			<Card.Content>
+				<div class="flex items-center gap-2">
+					<Button variant="outline">ISO</Button>
 
-			<button type="button"> ISO </button>
+					<ISOSizeInput bind:value={holeSize.current} class="flex-1">
+						{#snippet icon()}
+							<button
+								type="button"
+								class="hover:text-foreground"
+								aria-pressed={sizeSynced.current}
+								aria-label="Sync hole and shaft sizes"
+								title="Sync hole and shaft sizes"
+								onclick={() => (sizeSynced.current = !sizeSynced.current)}
+							>
+								{#if sizeSynced.current}
+									<LinkIcon class="size-3.5" />
+								{:else}
+									<UnlinkIcon class="size-3.5" />
+								{/if}
+							</button>
+						{/snippet}
+					</ISOSizeInput>
 
-			<input
-				type="number"
-				bind:value={holeSize.current}
-				class="w-30 rounded-(--jb-radius-md) border border-(--jb-border-color) bg-(--jb-bg-dark) px-3 py-2 text-(--jb-text-primary)"
-			/>
-			<select
-				bind:value={holeLetter.current}
-				class="rounded-(--jb-radius-md) border border-(--jb-border-color) bg-(--jb-bg-dark) px-3 py-2 text-(--jb-text-primary)"
-			>
-				<option value="">-</option>
-				{#each holeDeviations() as letter (letter)}
-					<option value={letter}>{letter}</option>
-				{/each}
-			</select>
+					<ISOGridSelect
+						items={holeDeviations()}
+						bind:value={holeLetter.current}
+						placeholder="Letter..."
+						class="flex-1"
+					/>
 
-			<select
-				bind:value={holeGrade.current}
-				class="rounded-(--jb-radius-md) border border-(--jb-border-color) bg-(--jb-bg-dark) px-3 py-2 text-(--jb-text-primary)"
-			>
-				<option value="">-</option>
-				{#each grades() as grade (grade)}
-					<option value={grade}>{grade}</option>
-				{/each}
-			</select>
+					<ISOGridSelect
+						items={grades()}
+						bind:value={holeGrade.current}
+						placeholder="Grade..."
+						class="flex-1"
+					/>
 
-			{#if holeLimits && !lookupHole?.error}
-				<p>Max: {holeLimits.max.toFixed(4)} mm</p>
-				<p>Mid: {holeLimits.mid.toFixed(4)} mm</p>
-				<p>Min: {holeLimits.min.toFixed(4)} mm</p>
-			{:else if lookupHole?.error}
-				<p style="color: red">{lookupHole.error}</p>
-			{:else}
-				<p>Complete input selection</p>
-			{/if}
-		</div>
+					<Button variant="outline">P</Button>
+				</div>
 
-		<div
-			class="flex-1 rounded-(--jb-radius-lg) border border-(--jb-border-color) bg-(--jb-bg-card) p-6"
-		>
-			<label for="shaft" class="text-2xl font-bold"> Shaft </label>
-			<hr />
+				{#if holeLimits && !lookupHole?.error}
+					<p>Max: {holeLimits.max.toFixed(4)} mm</p>
+					<p>Mid: {holeLimits.mid.toFixed(4)} mm</p>
+					<p>Min: {holeLimits.min.toFixed(4)} mm</p>
+				{:else if lookupHole?.error}
+					<p class="text-destructive">{lookupHole.error}</p>
+				{:else}
+					<p>Complete input selection</p>
+				{/if}
+			</Card.Content>
+		</Card.Root>
 
-			<button type="button"> ISO </button>
-			<input
-				type="number"
-				bind:value={shaftSize.current}
-				class="w-30 rounded-(--jb-radius-md) border border-(--jb-border-color) bg-(--jb-bg-dark) px-3 py-2 text-(--jb-text-primary)"
-			/>
-			<select
-				bind:value={shaftLetter.current}
-				class="rounded-(--jb-radius-md) border border-(--jb-border-color) bg-(--jb-bg-dark) px-3 py-2 text-(--jb-text-primary)"
-			>
-				<option value="">-</option>
-				{#each shaftDeviations() as letter (letter)}
-					<option value={letter}>{letter}</option>
-				{/each}
-			</select>
+		<Card.Root class="flex-1">
+			<Card.Header>
+				<Card.Title class="text-2xl font-bold">Shaft</Card.Title>
+			</Card.Header>
+			<Card.Content>
+				<div class="flex items-center gap-2">
+					<Button variant="outline">ISO</Button>
 
-			<select
-				bind:value={shaftGrade.current}
-				class="rounded-(--jb-radius-md) border border-(--jb-border-color) bg-(--jb-bg-dark) px-3 py-2 text-(--jb-text-primary)"
-			>
-				<option value="">-</option>
-				{#each grades() as grade (grade)}
-					<option value={grade}>{grade}</option>
-				{/each}
-			</select>
+					<ISOSizeInput bind:value={shaftSize.current} class="flex-1">
+						{#snippet icon()}
+							<button
+								type="button"
+								class="hover:text-foreground"
+								aria-pressed={sizeSynced.current}
+								aria-label="Sync hole and shaft sizes"
+								title="Sync hole and shaft sizes"
+								onclick={() => (sizeSynced.current = !sizeSynced.current)}
+							>
+								{#if sizeSynced.current}
+									<LinkIcon class="size-3.5" />
+								{:else}
+									<UnlinkIcon class="size-3.5" />
+								{/if}
+							</button>
+						{/snippet}
+					</ISOSizeInput>
 
-			{#if shaftLimits && !lookupShaft?.error}
-				<p>Max: {shaftLimits.max.toFixed(4)} mm</p>
-				<p>Mid: {shaftLimits.mid.toFixed(4)} mm</p>
-				<p>Min: {shaftLimits.min.toFixed(4)} mm</p>
-			{:else if lookupShaft?.error}
-				<p style="color: red">{lookupShaft.error}</p>
-			{:else}
-				<p>Complete input selection</p>
-			{/if}
-		</div>
+					<ISOGridSelect
+						items={shaftDeviations()}
+						bind:value={shaftLetter.current}
+						placeholder="Letter..."
+						class="flex-1"
+					/>
+
+					<ISOGridSelect
+						items={grades()}
+						bind:value={shaftGrade.current}
+						placeholder="Grade..."
+						class="flex-1"
+					/>
+
+					<Button variant="outline">P</Button>
+				</div>
+
+				{#if shaftLimits && !lookupShaft?.error}
+					<p>Max: {shaftLimits.max.toFixed(4)} mm</p>
+					<p>Mid: {shaftLimits.mid.toFixed(4)} mm</p>
+					<p>Min: {shaftLimits.min.toFixed(4)} mm</p>
+				{:else if lookupShaft?.error}
+					<p class="text-destructive">{lookupShaft.error}</p>
+				{:else}
+					<p>Complete input selection</p>
+				{/if}
+			</Card.Content>
+		</Card.Root>
 	</div>
 
-	<div class="rounded-(--jb-radius-lg) border border-(--jb-border-color) bg-(--jb-bg-card) p-6">
-		<label for="fit" class="text-2xl font-bold"> Fit </label>
-		<hr />
-
-		{#if fit}
-			<p>Min: {fit.minClearance.toFixed(4)} mm</p>
-			<p>Mid: {fit.midClearance.toFixed(4)} mm</p>
-			<p>Max: {fit.maxClearance.toFixed(4)} mm</p>
-			<p>Fit type: {fit.type}</p>
-		{/if}
-	</div>
+	<Card.Root>
+		<Card.Header>
+			<div class="flex items-center justify-between">
+				<Card.Title class="text-2xl font-bold">Fit</Card.Title>
+				{#if fit}
+					<Badge variant={fitBadgeVariant}>{fit.type}</Badge>
+				{/if}
+			</div>
+		</Card.Header>
+		<Card.Content>
+			{#if fit}
+				<div class="grid grid-cols-3 gap-6">
+					<div>
+						<p class="text-xs tracking-wide text-muted-foreground uppercase">Min</p>
+						<p class="text-lg font-semibold">{fit.minClearance.toFixed(4)} mm</p>
+					</div>
+					<div>
+						<p class="text-xs tracking-wide text-muted-foreground uppercase">Mid</p>
+						<p class="text-lg font-semibold">{fit.midClearance.toFixed(4)} mm</p>
+					</div>
+					<div>
+						<p class="text-xs tracking-wide text-muted-foreground uppercase">Max</p>
+						<p class="text-lg font-semibold">{fit.maxClearance.toFixed(4)} mm</p>
+					</div>
+				</div>
+			{:else}
+				<p class="text-sm text-muted-foreground">Complete input selection</p>
+			{/if}
+		</Card.Content>
+	</Card.Root>
 </div>

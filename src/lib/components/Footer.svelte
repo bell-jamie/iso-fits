@@ -1,46 +1,53 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import MoonIcon from '@lucide/svelte/icons/moon';
+	import SunIcon from '@lucide/svelte/icons/sun';
+	import HomeIcon from '@lucide/svelte/icons/house';
+	import MailIcon from '@lucide/svelte/icons/mail';
+
+	let isDark = $state(true);
+
+	function applyTheme(theme: string) {
+		document.documentElement.setAttribute('data-theme', theme);
+		document.documentElement.classList.toggle('dark', theme === 'dark');
+		isDark = theme === 'dark';
+	}
 
 	onMount(() => {
-		const savedTheme = localStorage.getItem('theme') || 'dark';
-		document.documentElement.setAttribute('data-theme', savedTheme);
+		applyTheme(localStorage.getItem('theme') || 'dark');
 	});
 
 	function toggleTheme() {
-		const currentTheme = document.documentElement.getAttribute('data-theme');
-		const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-		document.documentElement.setAttribute('data-theme', newTheme);
+		const newTheme = isDark ? 'light' : 'dark';
+		applyTheme(newTheme);
 		localStorage.setItem('theme', newTheme);
 	}
 </script>
 
-<footer>
-	<div class="footer-content">
-		<div class="footer-buttons footer-buttons-left">
+<footer class="bg-background text-muted-foreground fixed inset-x-0 bottom-0 z-50 border-t py-4">
+	<div class="relative mx-auto flex w-full max-w-5xl flex-wrap items-center justify-center gap-6 px-8">
+		<div class="absolute left-8 flex gap-2">
 			<a
 				href="https://bell-jamie.github.io/"
-				class="theme-toggle"
+				class={buttonVariants({ variant: 'outline', size: 'icon' })}
 				aria-label="Back to home"
 				title="Home"
 			>
-				<svg fill="currentColor" viewBox="0 0 20 20">
-					<path
-						d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
-					/>
-				</svg>
+				<HomeIcon class="size-4" />
 			</a>
 		</div>
 
-		<div class="footer-center">
-			<span class="copyright">© 2026 James Bell</span>
-			<span class="footer-separator">·</span>
+		<div class="flex flex-wrap items-center justify-center gap-3">
+			<span class="text-sm">© 2026 James Bell</span>
+			<span class="text-sm opacity-40">·</span>
 			<a
 				href="https://github.com/bell-jamie"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="social-link"
+				class="hover:text-primary flex items-center gap-1 text-sm transition-colors"
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+				<svg class="size-4" fill="currentColor" viewBox="0 0 24 24">
 					<path
 						d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
 					/>
@@ -51,50 +58,38 @@
 				href="https://www.linkedin.com/in/bell-jamie/"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="social-link"
+				class="hover:text-primary flex items-center gap-1 text-sm transition-colors"
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+				<svg class="size-4" fill="currentColor" viewBox="0 0 24 24">
 					<path
 						d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
 					/>
 				</svg>
 				LinkedIn
 			</a>
-			<a href="mailto:james.m.h.bell@icloud.com" class="social-link">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-					></path>
-					<polyline points="22,6 12,13 2,6"></polyline>
-				</svg>
+			<a
+				href="mailto:james.m.h.bell@icloud.com"
+				class="hover:text-primary flex items-center gap-1 text-sm transition-colors"
+			>
+				<MailIcon class="size-4" />
 				Email
 			</a>
 		</div>
 
-		<div class="footer-buttons footer-buttons-right">
-			<button
-				class="theme-toggle"
+		<div class="absolute right-8 flex gap-2">
+			<Button
+				variant="outline"
+				size="icon"
 				onclick={toggleTheme}
 				aria-label="Toggle dark/light mode"
 				title="Toggle theme"
 			>
-				<svg class="moon-icon" fill="currentColor" viewBox="0 0 20 20">
-					<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-				</svg>
-				<svg class="sun-icon" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-						clip-rule="evenodd"
-					></path>
-				</svg>
-			</button>
+				{#if isDark}
+					<MoonIcon class="size-4" />
+				{:else}
+					<SunIcon class="size-4" />
+				{/if}
+			</Button>
 		</div>
 	</div>
 </footer>
