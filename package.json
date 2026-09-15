@@ -14,7 +14,9 @@
 		"format": "prettier --write ."
 	},
 	"dependencies": {
-		"iso-286": "file:packages/iso-286/pkg"
+		"@bell-jamie/theme": "github:bell-jamie/bell-jamie.github.io#gh-pages",
+		"iso-286": "github:bell-jamie/iso-286#build",
+		"runed": "^0.37.1"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
