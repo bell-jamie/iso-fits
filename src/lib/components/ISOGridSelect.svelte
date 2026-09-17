@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Popover from '$lib/components/ui/popover';
 	import { Input } from '$lib/components/ui/input';
+	import { buttonVariants } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
 	import { gridFlow } from '$lib/settings.svelte';
 
@@ -10,7 +11,8 @@
 		placeholder = 'Select...',
 		emptyText = 'No match found.',
 		columns = 4,
-		class: className
+		class: className,
+		title
 	}: {
 		items: string[];
 		value?: string;
@@ -18,6 +20,7 @@
 		emptyText?: string;
 		columns?: number;
 		class?: string;
+		title?: string;
 	} = $props();
 
 	let open = $state(false);
@@ -25,11 +28,30 @@
 	let browsing = $state(true);
 	let triggerRef = $state<HTMLInputElement>(null!);
 
+	// guards against stale/invalid persisted values (e.g. a lowercase shaft
+	// deviation left over in the hole card's letter field) that never went
+	// through select() below, so were never validated against this list.
+	$effect(() => {
+		if (value && !items.includes(value)) {
+			value = '';
+			search = '';
+		}
+	});
+
+	// closing without an explicit click (blur, Escape, Enter): accept whatever
+	// was typed if it case-insensitively matches an item (e.g. "js" -> "JS"),
+	// otherwise revert to the last committed value
 	$effect(() => {
 		if (open) {
 			browsing = true;
 		} else if (search !== value) {
-			search = value;
+			const match = items.find((item) => item.toLowerCase() === search.toLowerCase());
+			if (match) {
+				value = match;
+				search = match;
+			} else {
+				search = value;
+			}
 		}
 	});
 
@@ -61,14 +83,24 @@
 				type="text"
 				bind:value={search}
 				{placeholder}
+				{title}
 				autocomplete="off"
-				class={cn('w-full', className)}
+				class={cn(
+					buttonVariants({ variant: 'outline' }),
+					'w-full bg-background text-left dark:bg-background',
+					className
+				)}
 				onkeydown={(e) => {
-					if (e.key !== 'Escape') open = true;
+					if (e.key === 'Enter') {
+						open = false;
+					} else if (e.key !== 'Escape') {
+						open = true;
+					}
 				}}
 				oninput={() => {
 					browsing = false;
 				}}
+				onfocus={(e) => e.currentTarget.select()}
 			/>
 		{/snippet}
 	</Popover.Trigger>
@@ -79,14 +111,14 @@
 		onCloseAutoFocus={(e) => e.preventDefault()}
 	>
 		{#if filtered.length === 0}
-			<p class="text-muted-foreground px-2 py-1.5 text-sm">{emptyText}</p>
+			<p class="px-2 py-1.5 text-sm text-muted-foreground">{emptyText}</p>
 		{:else}
 			<div class="grid gap-1" style={gridStyle}>
 				{#each filtered as item (item)}
 					<button
 						type="button"
 						class={cn(
-							'hover:bg-accent hover:text-accent-foreground flex items-center justify-center rounded-none py-1.5 text-sm',
+							'flex items-center justify-center rounded-none py-1.5 text-sm hover:bg-accent hover:text-accent-foreground',
 							value === item && 'bg-accent text-accent-foreground'
 						)}
 						onclick={() => select(item)}

@@ -5,6 +5,11 @@
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import RowsIcon from '@lucide/svelte/icons/rows-3';
 	import ColumnsIcon from '@lucide/svelte/icons/columns-3';
+	import ISOPreferredFitDialog from '$lib/components/ISOPreferredFitDialog.svelte';
+	import ISOReverseLookupDialog from '$lib/components/ISOReverseLookupDialog.svelte';
+
+	let preferredFitOpen = $state(false);
+	let reverseLookupOpen = $state(false);
 </script>
 
 <Popover.Root>
@@ -19,7 +24,7 @@
 		<p class="mb-3 text-sm font-medium">Settings</p>
 
 		<div class="flex items-center justify-between gap-2">
-			<span class="text-muted-foreground text-sm">Grid layout</span>
+			<span class="text-sm text-muted-foreground">Grid layout</span>
 			<div class="flex gap-1">
 				<Button
 					variant={gridFlow.current === 'row' ? 'secondary' : 'ghost'}
@@ -41,5 +46,18 @@
 				</Button>
 			</div>
 		</div>
+
+		<div class="mt-3 flex flex-col gap-2 border-t pt-3">
+			<span class="text-sm text-muted-foreground">Lookup tools (dev)</span>
+			<Button variant="outline" size="sm" onclick={() => (preferredFitOpen = true)}>
+				Find preferred fit
+			</Button>
+			<Button variant="outline" size="sm" onclick={() => (reverseLookupOpen = true)}>
+				Lookup tolerance
+			</Button>
+		</div>
 	</Popover.Content>
 </Popover.Root>
+
+<ISOPreferredFitDialog bind:open={preferredFitOpen} />
+<ISOReverseLookupDialog bind:open={reverseLookupOpen} />

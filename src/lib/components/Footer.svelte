@@ -25,8 +25,10 @@
 	}
 </script>
 
-<footer class="bg-background text-muted-foreground fixed inset-x-0 bottom-0 z-50 border-t py-4">
-	<div class="relative mx-auto flex w-full max-w-5xl flex-wrap items-center justify-center gap-6 px-8">
+<footer class="fixed inset-x-0 bottom-0 z-50 border-t bg-background py-4 text-muted-foreground">
+	<div
+		class="relative mx-auto flex w-full max-w-5xl flex-wrap items-center justify-center gap-6 px-8"
+	>
 		<div class="absolute left-8 flex gap-2">
 			<a
 				href="https://bell-jamie.github.io/"
@@ -45,7 +47,7 @@
 				href="https://github.com/bell-jamie"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="hover:text-primary flex items-center gap-1 text-sm transition-colors"
+				class="flex items-center gap-1 text-sm transition-colors hover:text-primary"
 			>
 				<svg class="size-4" fill="currentColor" viewBox="0 0 24 24">
 					<path
@@ -58,7 +60,7 @@
 				href="https://www.linkedin.com/in/bell-jamie/"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="hover:text-primary flex items-center gap-1 text-sm transition-colors"
+				class="flex items-center gap-1 text-sm transition-colors hover:text-primary"
 			>
 				<svg class="size-4" fill="currentColor" viewBox="0 0 24 24">
 					<path
@@ -69,7 +71,7 @@
 			</a>
 			<a
 				href="mailto:james.m.h.bell@icloud.com"
-				class="hover:text-primary flex items-center gap-1 text-sm transition-colors"
+				class="flex items-center gap-1 text-sm transition-colors hover:text-primary"
 			>
 				<MailIcon class="size-4" />
 				Email

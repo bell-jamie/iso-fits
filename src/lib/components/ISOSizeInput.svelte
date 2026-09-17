@@ -18,7 +18,7 @@
 
 <div class={cn('relative', wrapperClass)}>
 	{#if icon}
-		<div class="text-muted-foreground absolute inset-y-0 left-0 flex items-center pl-2">
+		<div class="absolute inset-y-0 left-0 flex items-center pl-2 text-muted-foreground">
 			{@render icon()}
 		</div>
 	{/if}
@@ -27,9 +27,10 @@
 		bind:value
 		class={cn(
 			buttonVariants({ variant: 'outline' }),
-			'w-full text-right [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+			'w-full [appearance:textfield] bg-background text-right dark:bg-background [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
 			icon && 'pl-8'
 		)}
+		onfocus={(e) => e.currentTarget.select()}
 		{...restProps}
 	/>
 </div>
