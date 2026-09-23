@@ -15,7 +15,9 @@
 	}
 
 	onMount(() => {
-		applyTheme(localStorage.getItem('theme') || 'dark');
+		// the theme itself is already applied by the inline script in app.html
+		// (before first paint, to avoid a flash) — this just syncs the icon
+		isDark = document.documentElement.getAttribute('data-theme') !== 'light';
 	});
 
 	function toggleTheme() {

@@ -13,6 +13,7 @@
 	import ISOGridSelect from '$lib/components/ISOGridSelect.svelte';
 	import ISOSizeInput from '$lib/components/ISOSizeInput.svelte';
 	import ISOFitGlyph from '$lib/components/ISOFitGlyph.svelte';
+	import ISOFitBand from '$lib/components/ISOFitBand.svelte';
 	import ISOReverseLookupDialog from '$lib/components/ISOReverseLookupDialog.svelte';
 	import LinkIcon from '@lucide/svelte/icons/link';
 	import UnlinkIcon from '@lucide/svelte/icons/unlink';
@@ -301,7 +302,8 @@
 		const maxClearance = holeLimits.max - shaftLimits.min;
 		const minClearance = holeLimits.min - shaftLimits.max;
 		const midClearance = (maxClearance + minClearance) / 2;
-		const type = minClearance >= 0 ? 'Clearance' : maxClearance < 0 ? 'Interference' : 'Transition';
+		const type: 'Clearance' | 'Interference' | 'Transition' =
+			minClearance >= 0 ? 'Clearance' : maxClearance < 0 ? 'Interference' : 'Transition';
 		return {
 			minClearance,
 			midClearance,
@@ -596,7 +598,18 @@
 			</div>
 		</Card.Header>
 		<Card.Content>
-			{#if fit}
+			{#if fit && holeLimits && shaftLimits}
+				<ISOFitBand
+					holeMin={holeLimits.min}
+					holeMax={holeLimits.max}
+					holeNominal={holeNom}
+					holeClass={holeClass}
+					shaftMin={shaftLimits.min}
+					shaftMax={shaftLimits.max}
+					shaftNominal={shaftNom}
+					shaftClass={shaftClass}
+					class="mb-6"
+				/>
 				<div class="grid grid-cols-3 gap-6">
 					<div>
 						<p class="text-xs tracking-wide text-muted-foreground uppercase">Min</p>
