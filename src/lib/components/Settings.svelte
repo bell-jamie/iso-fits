@@ -1,15 +1,22 @@
 <script lang="ts">
 	import * as Popover from '$lib/components/ui/popover';
 	import { Button } from '$lib/components/ui/button';
-	import { gridFlow } from '$lib/settings.svelte';
+	import { gridFlow, CALCULATOR_STORAGE_KEYS } from '$lib/settings.svelte';
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import RowsIcon from '@lucide/svelte/icons/rows-3';
 	import ColumnsIcon from '@lucide/svelte/icons/columns-3';
+	import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw';
 	import ISOPreferredFitDialog from '$lib/components/ISOPreferredFitDialog.svelte';
 	import ISOReverseLookupDialog from '$lib/components/ISOReverseLookupDialog.svelte';
 
 	let preferredFitOpen = $state(false);
 	let reverseLookupOpen = $state(false);
+
+	function resetApp() {
+		if (!confirm('Reset the hole and shaft inputs to their defaults?')) return;
+		for (const key of CALCULATOR_STORAGE_KEYS) localStorage.removeItem(key);
+		location.reload();
+	}
 </script>
 
 <Popover.Root>
@@ -56,6 +63,15 @@
 				Lookup tolerance
 			</Button>
 		</div>
+
+		<div class="mt-3 border-t pt-3">
+			<Button variant="outline" size="sm" class="w-full" onclick={resetApp}>
+				<RotateCcwIcon class="size-3.5" />
+				Reset app
+			</Button>
+		</div>
+
+		<p class="mt-3 border-t pt-3 text-xs text-muted-foreground">v{__APP_VERSION__}</p>
 	</Popover.Content>
 </Popover.Root>
 

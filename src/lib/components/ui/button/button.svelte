@@ -23,6 +23,7 @@
 				"icon-xs": "size-6 rounded-[min(var(--radius-md),8px)] in-data-[slot=button-group]:rounded-md [&_svg:not([class*='size-'])]:size-3",
 				"icon-sm": "size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md",
 				"icon-lg": "size-10",
+				"icon-compact": "px-2.5 py-1.5",
 			},
 		},
 		defaultVariants: {

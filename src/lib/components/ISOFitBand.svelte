@@ -7,20 +7,24 @@
 		holeMax,
 		holeNominal,
 		holeClass,
+		holeName,
 		shaftMin,
 		shaftMax,
 		shaftNominal,
 		shaftClass,
+		shaftName,
 		class: className
 	}: {
 		holeMin: number;
 		holeMax: number;
 		holeNominal: number;
 		holeClass: string;
+		holeName: string;
 		shaftMin: number;
 		shaftMax: number;
 		shaftNominal: number;
 		shaftClass: string;
+		shaftName: string;
 		class?: string;
 	} = $props();
 
@@ -167,18 +171,11 @@
 	const shaftBottom = shaftOutlineY + OUTLINE_HEIGHT;
 	const zoneY = shaftBottom + ZONE_GAP;
 	const holeOutlineY = zoneY + ZONE_HEIGHT + ZONE_GAP;
-	const VIEW_HEIGHT = holeOutlineY + OUTLINE_HEIGHT + 1;
+	const holeBottomY = holeOutlineY + OUTLINE_HEIGHT;
+	const VIEW_HEIGHT = holeBottomY + 1;
 
-	// vertical centre of each bar's row, in viewBox units and as a % of the
-	// chart height (the % is for positioning the HTML label overlays that sit
-	// on top of the bars; the viewBox value is for the matching SVG masks)
-	const shaftLabelCenterY = (shaftOutlineY + shaftBottom) / 2;
-	const holeLabelCenterY = holeOutlineY + OUTLINE_HEIGHT / 2;
-	const shaftLabelTop = (shaftLabelCenterY / VIEW_HEIGHT) * 100;
-	const holeLabelTop = (holeLabelCenterY / VIEW_HEIGHT) * 100;
-
-	let shaftLabel = $derived(`Shaft ${shaftNominal} ${shaftClass}`);
-	let holeLabel = $derived(`Hole ${holeNominal} ${holeClass}`);
+	let shaftLabel = $derived(`${shaftName} ${shaftNominal} ${shaftClass}`);
+	let holeLabel = $derived(`${holeName} ${holeNominal} ${holeClass}`);
 
 	// the chart is scaled non-uniformly (preserveAspectRatio="none" on a viewBox
 	// that's much wider than it is tall), so a viewBox-unit square isn't a
@@ -189,25 +186,6 @@
 	let svgHeight = $state(0);
 	let xScale = $derived(svgWidth / 100 || 1);
 	let yScale = $derived(svgHeight / VIEW_HEIGHT || 1);
-
-	// the label text sits directly on the hatched bars; rather than paint a
-	// background patch behind it, we measure the rendered label size and cut
-	// a matching hole out of that bar's hatch fill (and outline) via an SVG
-	// mask, so the text sits on genuinely bare space instead of a sticker
-	const LABEL_MASK_PADDING_PX = 4;
-	let shaftLabelWidthPx = $state(0);
-	let shaftLabelHeightPx = $state(0);
-	let holeLabelWidthPx = $state(0);
-	let holeLabelHeightPx = $state(0);
-
-	let shaftMaskRect = $derived({
-		width: shaftLabelWidthPx / xScale + LABEL_MASK_PADDING_PX / xScale,
-		height: shaftLabelHeightPx / yScale + LABEL_MASK_PADDING_PX / yScale
-	});
-	let holeMaskRect = $derived({
-		width: holeLabelWidthPx / xScale + LABEL_MASK_PADDING_PX / xScale,
-		height: holeLabelHeightPx / yScale + LABEL_MASK_PADDING_PX / yScale
-	});
 
 	// chamfer size: CHAMFER_Y is the real "how far it reaches" control, in
 	// viewBox y-units; CHAMFER_X is derived so that, once scaled to screen
@@ -231,12 +209,11 @@
 	let shaftLimits = $derived(
 		combPath(shaftMinEdge, shaftMaxEdge, shaftNominalEdge, zoneY - COMB_ZONE_GAP, -1)
 	);
-	let holeBottom = $derived(holeOutlineY + OUTLINE_HEIGHT);
 	let holePath = $derived(
-		`M ${holeEdge + CHAMFER_X},${holeOutlineY} L 100,${holeOutlineY} L 100,${holeBottom} L ${holeEdge},${holeBottom} L ${holeEdge},${holeOutlineY + CHAMFER_Y} Z`
+		`M ${holeEdge + CHAMFER_X},${holeOutlineY} L 100,${holeOutlineY} L 100,${holeBottomY} L ${holeEdge},${holeBottomY} L ${holeEdge},${holeOutlineY + CHAMFER_Y} Z`
 	);
 	let holeBackground = $derived(
-		`M ${holeEdge + CHAMFER_X},${holeOutlineY}, L 0,${holeOutlineY} L 0,${holeBottom} L ${holeEdge},${holeBottom} M 0,${holeOutlineY + CHAMFER_Y} L ${holeEdge},${holeOutlineY + CHAMFER_Y}`
+		`M ${holeEdge + CHAMFER_X},${holeOutlineY}, L 0,${holeOutlineY} L 0,${holeBottomY} L ${holeEdge},${holeBottomY} M 0,${holeOutlineY + CHAMFER_Y} L ${holeEdge},${holeOutlineY + CHAMFER_Y}`
 	);
 	let holeMinEdge = $derived(pct(holeMin));
 	let holeMaxEdge = $derived(pct(holeMax));
@@ -262,6 +239,9 @@
 </script>
 
 <div class={cn('flex flex-col gap-1', className)}>
+	<div class="text-xs font-bold whitespace-nowrap">
+		{shaftLabel}
+	</div>
 	<div class="relative">
 		<svg
 			viewBox={`0 0 100 ${VIEW_HEIGHT}`}
@@ -305,26 +285,6 @@
 						vector-effect="non-scaling-stroke"
 					/>
 				</pattern>
-				<mask id="shaft-label-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={VIEW_HEIGHT}>
-					<rect x="0" y="0" width="100" height={VIEW_HEIGHT} fill="white" />
-					<rect
-						x="0"
-						y={shaftLabelCenterY - shaftMaskRect.height / 2}
-						width={shaftMaskRect.width}
-						height={shaftMaskRect.height}
-						fill="black"
-					/>
-				</mask>
-				<mask id="hole-label-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={VIEW_HEIGHT}>
-					<rect x="0" y="0" width="100" height={VIEW_HEIGHT} fill="white" />
-					<rect
-						x={100 - holeMaskRect.width}
-						y={holeLabelCenterY - holeMaskRect.height / 2}
-						width={holeMaskRect.width}
-						height={holeMaskRect.height}
-						fill="black"
-					/>
-				</mask>
 			</defs>
 			<path
 				d={shaftPath}
@@ -332,7 +292,6 @@
 				fill="url(#shaft-hatch)"
 				stroke-width="0.75"
 				vector-effect="non-scaling-stroke"
-				mask="url(#shaft-label-mask)"
 			/>
 			<path
 				d={shaftLimits}
@@ -366,7 +325,6 @@
 				fill="url(#hole-hatch)"
 				stroke-width="0.75"
 				vector-effect="non-scaling-stroke"
-				mask="url(#hole-label-mask)"
 			/>
 			<path
 				d={holeBackground}
@@ -395,31 +353,6 @@
 			{/if}
 		</svg>
 
-		<div
-			class="pointer-events-none absolute left-0 -translate-y-1/2"
-			style={`top: ${shaftLabelTop}%`}
-		>
-			<span
-				class="inline-block px-1 text-xs font-bold whitespace-nowrap"
-				bind:offsetWidth={shaftLabelWidthPx}
-				bind:offsetHeight={shaftLabelHeightPx}
-			>
-				{shaftLabel}
-			</span>
-		</div>
-		<div
-			class="pointer-events-none absolute right-0 -translate-y-1/2"
-			style={`top: ${holeLabelTop}%`}
-		>
-			<span
-				class="inline-block px-1 text-xs font-bold whitespace-nowrap"
-				bind:offsetWidth={holeLabelWidthPx}
-				bind:offsetHeight={holeLabelHeightPx}
-			>
-				{holeLabel}
-			</span>
-		</div>
-
 		{#if hoverValue !== null && hoverFraction !== null}
 			<div
 				class="pointer-events-none absolute -top-6 -translate-x-1/2 rounded border border-border bg-popover px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-popover-foreground tabular-nums shadow-sm"
@@ -428,6 +361,9 @@
 				{hoverValue.toFixed(3)} mm
 			</div>
 		{/if}
+	</div>
+	<div class="text-right text-xs font-bold whitespace-nowrap">
+		{holeLabel}
 	</div>
 	<!-- <div class="flex justify-between pl-12 text-xs text-muted-foreground tabular-nums">
 		<span>{domainMin.toFixed(4)} mm</span>

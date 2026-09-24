@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
-	import MoonIcon from '@lucide/svelte/icons/moon';
-	import SunIcon from '@lucide/svelte/icons/sun';
-	import HomeIcon from '@lucide/svelte/icons/house';
-	import MailIcon from '@lucide/svelte/icons/mail';
+	import { cn } from '$lib/utils';
+
+	// footer-only: a primary-tinted hover, matching the cross-app branding
+	// strip shared with o-ring-studio, rather than the app's default neutral
+	// outline-button hover used everywhere else in this tool
+	const FOOTER_BUTTON_HOVER_CLASS = 'hover:border-primary hover:bg-primary/10 hover:text-primary';
 
 	let isDark = $state(true);
 
@@ -34,11 +36,18 @@
 		<div class="absolute left-8 flex gap-2">
 			<a
 				href="https://bell-jamie.github.io/"
-				class={buttonVariants({ variant: 'outline', size: 'icon' })}
+				class={cn(
+					buttonVariants({ variant: 'outline', size: 'icon-compact' }),
+					FOOTER_BUTTON_HOVER_CLASS
+				)}
 				aria-label="Back to home"
 				title="Home"
 			>
-				<HomeIcon class="size-4" />
+				<svg class="size-4" fill="currentColor" viewBox="0 0 20 20">
+					<path
+						d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+					/>
+				</svg>
 			</a>
 		</div>
 
@@ -75,7 +84,10 @@
 				href="mailto:james.m.h.bell@icloud.com"
 				class="flex items-center gap-1 text-sm transition-colors hover:text-primary"
 			>
-				<MailIcon class="size-4" />
+				<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+					<polyline points="22,6 12,13 2,6" />
+				</svg>
 				Email
 			</a>
 		</div>
@@ -83,15 +95,24 @@
 		<div class="absolute right-8 flex gap-2">
 			<Button
 				variant="outline"
-				size="icon"
+				size="icon-compact"
+				class={FOOTER_BUTTON_HOVER_CLASS}
 				onclick={toggleTheme}
 				aria-label="Toggle dark/light mode"
 				title="Toggle theme"
 			>
 				{#if isDark}
-					<MoonIcon class="size-4" />
+					<svg class="size-4" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+					</svg>
 				{:else}
-					<SunIcon class="size-4" />
+					<svg class="size-4" fill="currentColor" viewBox="0 0 20 20">
+						<path
+							fill-rule="evenodd"
+							d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+							clip-rule="evenodd"
+						/>
+					</svg>
 				{/if}
 			</Button>
 		</div>

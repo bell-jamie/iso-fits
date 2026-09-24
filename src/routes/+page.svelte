@@ -27,6 +27,7 @@
 	const holeMode = new PersistedState<'iso' | 'manual'>('holeMode', 'iso');
 	const holeManualUpper = new PersistedState('holeManualUpper', '');
 	const holeManualLower = new PersistedState('holeManualLower', '');
+	const holeName = new PersistedState('holeName', 'Hole');
 
 	const shaftSize = new PersistedState('shaftSize', '');
 	const shaftLetter = new PersistedState('shaftLetter', '');
@@ -34,11 +35,24 @@
 	const shaftMode = new PersistedState<'iso' | 'manual'>('shaftMode', 'iso');
 	const shaftManualUpper = new PersistedState('shaftManualUpper', '');
 	const shaftManualLower = new PersistedState('shaftManualLower', '');
+	const shaftName = new PersistedState('shaftName', 'Shaft');
 
-	const sizeSynced = new PersistedState('sizeSynced', false);
+	const sizeSynced = new PersistedState('sizeSynced', true);
 
 	let holeReverseOpen = $state(false);
 	let shaftReverseOpen = $state(false);
+
+	// editable card headings: commit on Enter (no newlines in a heading), and
+	// fall back to the default name rather than leaving it blank on blur
+	function handleNameKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Enter') return;
+		event.preventDefault();
+		(event.currentTarget as HTMLElement).blur();
+	}
+
+	function handleNameBlur(name: PersistedState<string>, fallback: string) {
+		name.current = name.current.trim() || fallback;
+	}
 
 	function applyMatch(
 		match: Iso286Match,
@@ -312,6 +326,16 @@
 		};
 	});
 
+	// same blue/red convention as the fit glyph's clearance/interference zones
+	const CLEARANCE_TEXT_CLASS = 'text-blue-500 dark:text-blue-400';
+	const INTERFERENCE_TEXT_CLASS = 'text-red-500 dark:text-red-400';
+
+	function clearanceLabel(value: number) {
+		return value >= 0
+			? { text: 'Clearance', class: CLEARANCE_TEXT_CLASS }
+			: { text: 'Interference', class: INTERFERENCE_TEXT_CLASS };
+	}
+
 	let fitBadgeVariant: 'default' | 'secondary' | 'destructive' = $derived(
 		fit?.type === 'Interference'
 			? 'destructive'
@@ -326,7 +350,18 @@
 		<Card.Root class="flex-1">
 			<Card.Header>
 				<div class="flex items-center justify-between">
-					<Card.Title class="text-2xl font-bold">Hole</Card.Title>
+					<Card.Title class="text-2xl font-bold">
+						<span
+							contenteditable="true"
+							role="textbox"
+							tabindex="0"
+							aria-label="Hole name"
+							bind:textContent={holeName.current}
+							onkeydown={handleNameKeydown}
+							onblur={() => handleNameBlur(holeName, 'Hole')}
+							class="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						></span>
+					</Card.Title>
 					<Button
 						variant="outline"
 						size="icon"
@@ -458,7 +493,18 @@
 		<Card.Root class="flex-1">
 			<Card.Header>
 				<div class="flex items-center justify-between">
-					<Card.Title class="text-2xl font-bold">Shaft</Card.Title>
+					<Card.Title class="text-2xl font-bold">
+						<span
+							contenteditable="true"
+							role="textbox"
+							tabindex="0"
+							aria-label="Shaft name"
+							bind:textContent={shaftName.current}
+							onkeydown={handleNameKeydown}
+							onblur={() => handleNameBlur(shaftName, 'Shaft')}
+							class="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						></span>
+					</Card.Title>
 					<Button
 						variant="outline"
 						size="icon"
@@ -603,25 +649,36 @@
 					holeMin={holeLimits.min}
 					holeMax={holeLimits.max}
 					holeNominal={holeNom}
-					holeClass={holeClass}
+					{holeClass}
+					holeName={holeName.current}
 					shaftMin={shaftLimits.min}
 					shaftMax={shaftLimits.max}
 					shaftNominal={shaftNom}
-					shaftClass={shaftClass}
+					{shaftClass}
+					shaftName={shaftName.current}
 					class="mb-6"
 				/>
 				<div class="grid grid-cols-3 gap-6">
 					<div>
 						<p class="text-xs tracking-wide text-muted-foreground uppercase">Min</p>
 						<p class="text-lg font-semibold">{fit.minClearance.toFixed(4)} mm</p>
+						<p class="text-xs font-medium {clearanceLabel(fit.minClearance).class}">
+							{clearanceLabel(fit.minClearance).text}
+						</p>
 					</div>
 					<div>
 						<p class="text-xs tracking-wide text-muted-foreground uppercase">Mid</p>
 						<p class="text-lg font-semibold">{fit.midClearance.toFixed(4)} mm</p>
+						<p class="text-xs font-medium {clearanceLabel(fit.midClearance).class}">
+							{clearanceLabel(fit.midClearance).text}
+						</p>
 					</div>
 					<div>
 						<p class="text-xs tracking-wide text-muted-foreground uppercase">Max</p>
 						<p class="text-lg font-semibold">{fit.maxClearance.toFixed(4)} mm</p>
+						<p class="text-xs font-medium {clearanceLabel(fit.maxClearance).class}">
+							{clearanceLabel(fit.maxClearance).text}
+						</p>
 					</div>
 				</div>
 			{:else}
