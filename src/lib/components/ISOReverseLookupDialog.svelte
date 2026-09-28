@@ -99,8 +99,11 @@
 		decimalsValue = Math.min(MAX_DECIMALS, decimalsValue + 1);
 	}
 
+	// browsing from an already-picked ISO class always narrows to the curated
+	// preferred series (that's the whole point of "preferred tolerances"); from
+	// manual/raw limits it's the user's own optional toggle
 	let preferredSet = $derived.by(() => {
-		if (!preferredOnly) return null;
+		if (!isIsoSource && !preferredOnly) return null;
 		const list = activeFeature === 'hole' ? holePreferredTolerances() : shaftPreferredTolerances();
 		return new Set(list);
 	});

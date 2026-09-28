@@ -55,7 +55,7 @@
 		</div>
 
 		<div class="mt-3 flex flex-col gap-2 border-t pt-3">
-			<span class="text-sm text-muted-foreground">Lookup tools (dev)</span>
+			<!-- <span class="text-sm text-muted-foreground">Lookup tools</span> -->
 			<Button variant="outline" size="sm" onclick={() => (preferredFitOpen = true)}>
 				Find preferred fit
 			</Button>

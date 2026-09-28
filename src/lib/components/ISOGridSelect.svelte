@@ -40,19 +40,32 @@
 
 	// closing without an explicit click (blur, Escape, Enter): accept whatever
 	// was typed if it case-insensitively matches an item (e.g. "js" -> "JS"),
-	// otherwise revert to the last committed value
+	// otherwise revert to the last committed value. Gated on an actual
+	// open -> closed transition (via wasOpen, a plain non-reactive flag) so
+	// that external changes to `value` while already closed (e.g. an "apply
+	// match" action elsewhere) sync into `search` below instead of being
+	// mistaken for unsaved typed text and reverted.
+	let wasOpen = false;
 	$effect(() => {
 		if (open) {
 			browsing = true;
-		} else if (search !== value) {
-			const match = items.find((item) => item.toLowerCase() === search.toLowerCase());
-			if (match) {
-				value = match;
-				search = match;
-			} else {
-				search = value;
+			wasOpen = true;
+			return;
+		}
+
+		if (wasOpen) {
+			wasOpen = false;
+			if (search !== value) {
+				const match = items.find((item) => item.toLowerCase() === search.toLowerCase());
+				if (match) {
+					value = match;
+					search = match;
+					return;
+				}
 			}
 		}
+
+		search = value;
 	});
 
 	let filtered = $derived(

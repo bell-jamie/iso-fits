@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { lookupIso286, listClosestFits, type Iso286Match } from '$lib/iso286';
-	import { formatSign, formatMicrons, decimalPlaces } from '$lib/format';
+	import {
+		formatSign,
+		formatMicrons,
+		decimalPlaces,
+		formatClearance,
+		clearanceLabel
+	} from '$lib/format';
 	import { tone } from '$lib/tone';
 	import { cn } from '$lib/utils';
 	import { holeDeviations, shaftDeviations, grades } from 'iso-286';
@@ -41,6 +47,24 @@
 
 	let holeReverseOpen = $state(false);
 	let shaftReverseOpen = $state(false);
+
+	// bound to the fit glyph's draggable "actual size" markers, so clicking
+	// Min/Mid/Max below can snap the visualisation to that scenario
+	let shaftActualDrag: number | null = $state(null);
+	let holeActualDrag: number | null = $state(null);
+
+	function snapFitTo(kind: 'min' | 'mid' | 'max') {
+		if (!holeLimits || !shaftLimits) return;
+		if (kind === 'mid') {
+			shaftActualDrag = null;
+			holeActualDrag = null;
+			return;
+		}
+		// min clearance: hole at its smallest, shaft at its largest (and vice
+		// versa for max) — matches how fit.minClearance/maxClearance are computed
+		shaftActualDrag = kind === 'min' ? shaftLimits.max : shaftLimits.min;
+		holeActualDrag = kind === 'min' ? holeLimits.min : holeLimits.max;
+	}
 
 	// editable card headings: commit on Enter (no newlines in a heading), and
 	// fall back to the default name rather than leaving it blank on blur
@@ -326,16 +350,6 @@
 		};
 	});
 
-	// same blue/red convention as the fit glyph's clearance/interference zones
-	const CLEARANCE_TEXT_CLASS = 'text-blue-500 dark:text-blue-400';
-	const INTERFERENCE_TEXT_CLASS = 'text-red-500 dark:text-red-400';
-
-	function clearanceLabel(value: number) {
-		return value >= 0
-			? { text: 'Clearance', class: CLEARANCE_TEXT_CLASS }
-			: { text: 'Interference', class: INTERFERENCE_TEXT_CLASS };
-	}
-
 	let fitBadgeVariant: 'default' | 'secondary' | 'destructive' = $derived(
 		fit?.type === 'Interference'
 			? 'destructive'
@@ -346,7 +360,7 @@
 </script>
 
 <div class="flex flex-col gap-6">
-	<div class="flex gap-6">
+	<div class="flex flex-col gap-6 md:flex-row">
 		<Card.Root class="flex-1">
 			<Card.Header>
 				<div class="flex items-center justify-between">
@@ -362,41 +376,11 @@
 							class="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						></span>
 					</Card.Title>
-					<Button
-						variant="outline"
-						size="icon"
-						class="bg-background dark:bg-background"
-						disabled={!lookupHole?.tolerance}
-						aria-label="Find nearby tolerance classes"
-						title="Find nearby tolerance classes"
-						onclick={() => (holeReverseOpen = true)}
-					>
-						<SearchIcon class="size-4" />
-					</Button>
 				</div>
 			</Card.Header>
 			<Card.Content>
-				<div class="flex items-center gap-2">
-					<Button
-						variant="outline"
-						class="w-14 bg-background dark:bg-background"
-						title="Toggle ISO / custom"
-						onclick={() =>
-							toggleMode(
-								holeMode,
-								holeNom,
-								lookupHole?.tolerance,
-								holeManualUpper,
-								holeManualLower,
-								holeLetter,
-								holeGrade,
-								'hole'
-							)}
-					>
-						{holeMode.current === 'iso' ? 'ISO' : '±'}
-					</Button>
-
-					<ISOSizeInput bind:value={holeSize.current} title="Size (mm)" class="w-20 shrink-0">
+				<div class="flex flex-wrap items-center gap-2">
+					<ISOSizeInput bind:value={holeSize.current} title="Size (mm)" class="w-24 shrink-0">
 						{#snippet icon()}
 							<button
 								type="button"
@@ -421,7 +405,7 @@
 							bind:value={holeLetter.current}
 							placeholder="Deviation..."
 							title="Deviation"
-							class="flex-1"
+							class="min-w-20 max-w-24 flex-1"
 						/>
 
 						<ISOGridSelect
@@ -429,14 +413,14 @@
 							bind:value={holeGrade.current}
 							placeholder="Grade..."
 							title="Grade"
-							class="flex-1"
+							class="min-w-20 max-w-24 flex-1"
 						/>
 					{:else}
 						<ISOSizeInput
 							bind:value={holeManualUpper.current}
 							aria-label="Upper limit (mm)"
 							title="Upper limit"
-							class="flex-1"
+							class="min-w-28 flex-1"
 						>
 							{#snippet icon()}
 								<ChevronUpIcon class="size-3.5" aria-hidden="true" />
@@ -447,26 +431,55 @@
 							bind:value={holeManualLower.current}
 							aria-label="Lower limit (mm)"
 							title="Lower limit"
-							class="flex-1"
+							class="min-w-28 flex-1"
 						>
 							{#snippet icon()}
 								<ChevronDownIcon class="size-3.5" aria-hidden="true" />
 							{/snippet}
 						</ISOSizeInput>
 					{/if}
+
+					<Button
+						variant="outline"
+						class="w-14 bg-background dark:bg-background"
+						title="Toggle ISO / custom"
+						onclick={() =>
+							toggleMode(
+								holeMode,
+								holeNom,
+								lookupHole?.tolerance,
+								holeManualUpper,
+								holeManualLower,
+								holeLetter,
+								holeGrade,
+								'hole'
+							)}
+					>
+						{holeMode.current === 'iso' ? 'ISO' : '±'}
+					</Button>
+
+					<Button
+						variant="outline"
+						size="icon"
+						class="bg-background dark:bg-background"
+						disabled={!lookupHole?.tolerance}
+						aria-label="Find nearby tolerance classes"
+						title="Find nearby tolerance classes"
+						onclick={() => (holeReverseOpen = true)}
+					>
+						<SearchIcon class="size-4" />
+					</Button>
 				</div>
 
 				{#if holeRows && lookupHole?.tolerance}
-					<div class="mt-3 flex items-center gap-10">
+					<div class="mt-3 flex flex-wrap items-center gap-x-10 gap-y-3">
 						<ISOFitGlyph
 							kind="hole"
 							upper={lookupHole.tolerance.upper}
 							lower={lookupHole.tolerance.lower}
 							class="size-20 shrink-0"
 						/>
-						<div
-							class="grid flex-1 grid-cols-[auto_auto_auto] items-center gap-x-3 gap-y-1.5 text-sm"
-						>
+						<div class="grid grid-cols-[auto_auto_auto] items-center gap-x-3 gap-y-1.5 text-sm">
 							{#each holeRows as row (row.label)}
 								{#if row.tag === 'dash'}
 									<span class="h-px w-4 justify-self-start bg-muted-foreground"></span>
@@ -505,41 +518,11 @@
 							class="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						></span>
 					</Card.Title>
-					<Button
-						variant="outline"
-						size="icon"
-						class="bg-background dark:bg-background"
-						disabled={!lookupShaft?.tolerance}
-						aria-label="Find nearby tolerance classes"
-						title="Find nearby tolerance classes"
-						onclick={() => (shaftReverseOpen = true)}
-					>
-						<SearchIcon class="size-4" />
-					</Button>
 				</div>
 			</Card.Header>
 			<Card.Content>
-				<div class="flex items-center gap-2">
-					<Button
-						variant="outline"
-						class="w-14 bg-background dark:bg-background"
-						title="Toggle ISO / custom"
-						onclick={() =>
-							toggleMode(
-								shaftMode,
-								shaftNom,
-								lookupShaft?.tolerance,
-								shaftManualUpper,
-								shaftManualLower,
-								shaftLetter,
-								shaftGrade,
-								'shaft'
-							)}
-					>
-						{shaftMode.current === 'iso' ? 'ISO' : '±'}
-					</Button>
-
-					<ISOSizeInput bind:value={shaftSize.current} title="Size (mm)" class="w-20 shrink-0">
+				<div class="flex flex-wrap items-center gap-2">
+					<ISOSizeInput bind:value={shaftSize.current} title="Size (mm)" class="w-24 shrink-0">
 						{#snippet icon()}
 							<button
 								type="button"
@@ -564,7 +547,7 @@
 							bind:value={shaftLetter.current}
 							placeholder="Deviation..."
 							title="Deviation"
-							class="flex-1"
+							class="min-w-20 max-w-24 flex-1"
 						/>
 
 						<ISOGridSelect
@@ -572,14 +555,14 @@
 							bind:value={shaftGrade.current}
 							placeholder="Grade..."
 							title="Grade"
-							class="flex-1"
+							class="min-w-20 max-w-24 flex-1"
 						/>
 					{:else}
 						<ISOSizeInput
 							bind:value={shaftManualUpper.current}
 							aria-label="Upper limit (mm)"
 							title="Upper limit"
-							class="flex-1"
+							class="min-w-28 flex-1"
 						>
 							{#snippet icon()}
 								<ChevronUpIcon class="size-3.5" aria-hidden="true" />
@@ -590,26 +573,54 @@
 							bind:value={shaftManualLower.current}
 							aria-label="Lower limit (mm)"
 							title="Lower limit"
-							class="flex-1"
+							class="min-w-28 flex-1"
 						>
 							{#snippet icon()}
 								<ChevronDownIcon class="size-3.5" aria-hidden="true" />
 							{/snippet}
 						</ISOSizeInput>
 					{/if}
+
+					<Button
+						variant="outline"
+						class="w-14 bg-background dark:bg-background"
+						title="Toggle ISO / custom"
+						onclick={() =>
+							toggleMode(
+								shaftMode,
+								shaftNom,
+								lookupShaft?.tolerance,
+								shaftManualUpper,
+								shaftManualLower,
+								shaftLetter,
+								shaftGrade,
+								'shaft'
+							)}
+					>
+						{shaftMode.current === 'iso' ? 'ISO' : '±'}
+					</Button>
+					<Button
+						variant="outline"
+						size="icon"
+						class="bg-background dark:bg-background"
+						disabled={!lookupShaft?.tolerance}
+						aria-label="Find nearby tolerance classes"
+						title="Find nearby tolerance classes"
+						onclick={() => (shaftReverseOpen = true)}
+					>
+						<SearchIcon class="size-4" />
+					</Button>
 				</div>
 
 				{#if shaftRows && lookupShaft?.tolerance}
-					<div class="mt-3 flex items-center gap-10">
+					<div class="mt-3 flex flex-wrap items-center gap-x-10 gap-y-3">
 						<ISOFitGlyph
 							kind="shaft"
 							upper={lookupShaft.tolerance.upper}
 							lower={lookupShaft.tolerance.lower}
 							class="size-20 shrink-0"
 						/>
-						<div
-							class="grid flex-1 grid-cols-[auto_auto_auto] items-center gap-x-3 gap-y-1.5 text-sm"
-						>
+						<div class="grid grid-cols-[auto_auto_auto] items-center gap-x-3 gap-y-1.5 text-sm">
 							{#each shaftRows as row (row.label)}
 								{#if row.tag === 'dash'}
 									<span class="h-px w-4 justify-self-start bg-muted-foreground"></span>
@@ -637,48 +648,66 @@
 	<Card.Root>
 		<Card.Header>
 			<div class="flex items-center justify-between">
-				<Card.Title class="text-2xl font-bold">Fit</Card.Title>
 				{#if fit}
-					<Badge variant={fitBadgeVariant}>{fit.type}</Badge>
+					<Card.Title class="text-2xl font-bold">{fit.type} Fit</Card.Title>
+					<!-- <Badge variant={fitBadgeVariant}>{fit.type}</Badge> -->
 				{/if}
 			</div>
 		</Card.Header>
 		<Card.Content>
 			{#if fit && holeLimits && shaftLimits}
-				<ISOFitBand
-					holeMin={holeLimits.min}
-					holeMax={holeLimits.max}
-					holeNominal={holeNom}
-					{holeClass}
-					holeName={holeName.current}
-					shaftMin={shaftLimits.min}
-					shaftMax={shaftLimits.max}
-					shaftNominal={shaftNom}
-					{shaftClass}
-					shaftName={shaftName.current}
-					class="mb-6"
-				/>
-				<div class="grid grid-cols-3 gap-6">
-					<div>
-						<p class="text-xs tracking-wide text-muted-foreground uppercase">Min</p>
-						<p class="text-lg font-semibold">{fit.minClearance.toFixed(4)} mm</p>
-						<p class="text-xs font-medium {clearanceLabel(fit.minClearance).class}">
-							{clearanceLabel(fit.minClearance).text}
-						</p>
-					</div>
-					<div>
-						<p class="text-xs tracking-wide text-muted-foreground uppercase">Mid</p>
-						<p class="text-lg font-semibold">{fit.midClearance.toFixed(4)} mm</p>
-						<p class="text-xs font-medium {clearanceLabel(fit.midClearance).class}">
-							{clearanceLabel(fit.midClearance).text}
-						</p>
-					</div>
-					<div>
-						<p class="text-xs tracking-wide text-muted-foreground uppercase">Max</p>
-						<p class="text-lg font-semibold">{fit.maxClearance.toFixed(4)} mm</p>
-						<p class="text-xs font-medium {clearanceLabel(fit.maxClearance).class}">
-							{clearanceLabel(fit.maxClearance).text}
-						</p>
+				<div class="flex flex-col gap-6 lg:flex-row">
+					<ISOFitBand
+						holeMin={holeLimits.min}
+						holeMax={holeLimits.max}
+						holeNominal={holeNom}
+						{holeClass}
+						holeName={holeName.current}
+						shaftMin={shaftLimits.min}
+						shaftMax={shaftLimits.max}
+						shaftNominal={shaftNom}
+						{shaftClass}
+						shaftName={shaftName.current}
+						bind:shaftActualDrag
+						bind:holeActualDrag
+						class="lg:flex-1"
+					/>
+					<div
+						class="grid grid-cols-3 gap-6 lg:w-40 lg:shrink-0 lg:grid-cols-1 lg:content-center lg:gap-3"
+					>
+						<button
+							type="button"
+							class="flex flex-col items-center rounded-md p-1 text-center transition-colors hover:bg-muted"
+							onclick={() => snapFitTo('min')}
+						>
+							<p class="text-xs tracking-wide text-muted-foreground uppercase">MMC</p>
+							<p class="text-lg font-semibold">{formatClearance(fit.minClearance)}</p>
+							<p class="text-xs font-medium {clearanceLabel(fit.minClearance).class}">
+								{clearanceLabel(fit.minClearance).text}
+							</p>
+						</button>
+						<button
+							type="button"
+							class="flex flex-col items-center rounded-md p-1 text-center transition-colors hover:bg-muted"
+							onclick={() => snapFitTo('mid')}
+						>
+							<p class="text-xs tracking-wide text-muted-foreground uppercase">Mid</p>
+							<p class="text-lg font-semibold">{formatClearance(fit.midClearance)}</p>
+							<p class="text-xs font-medium {clearanceLabel(fit.midClearance).class}">
+								{clearanceLabel(fit.midClearance).text}
+							</p>
+						</button>
+						<button
+							type="button"
+							class="flex flex-col items-center rounded-md p-1 text-center transition-colors hover:bg-muted"
+							onclick={() => snapFitTo('max')}
+						>
+							<p class="text-xs tracking-wide text-muted-foreground uppercase">LMC</p>
+							<p class="text-lg font-semibold">{formatClearance(fit.maxClearance)}</p>
+							<p class="text-xs font-medium {clearanceLabel(fit.maxClearance).class}">
+								{clearanceLabel(fit.maxClearance).text}
+							</p>
+						</button>
 					</div>
 				</div>
 			{:else}
